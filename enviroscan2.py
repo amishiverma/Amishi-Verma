@@ -148,7 +148,8 @@ import os
 !pip install pyngrok streamlit --quiet
 
 # ✅ Step 2: Import necessary libraries
-from pyngrok import ngrok
+
+
 import time
 import os
 # ✅ Step 3: Export your ngrok authtoken (this sets an environment variable)
