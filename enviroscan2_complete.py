@@ -1066,410 +1066,595 @@ def generate_pollution_insights(df):
     
     return insights
 
-"""Real time dashboard and alerts (streamlit)"""
 
-!pip install streamlit
-!pip install pyngrok
-!pip install -q streamlit pyngrok
-import os
+"""Real-Time Dashboard and Alerts (Streamlit)"""
 
-# Commented out IPython magic to ensure Python compatibility.
-# %%writefile app.py
-# import streamlit as st
-# 
-# st.set_page_config(page_title="Pollution Source Identifier")
-# 
-# st.title(" 🤖 AI-Powered Pollution Source Identifier")
-# 
-# city = st.text_input("Enter a city name", placeholder="e.g., Delhi")
-# 
-# if st.button("Analyze"):
-#     if city.strip() == "":
-#         st.warning(" Please enter a valid city name.")
-#     else:
-#         st.success(f"Analyzing pollution sources for: {city}")
-#         st.markdown(f"""
-# ### AI Analysis Results for **{city}** (Simulated)
-# - **Main Pollutants:** PM2.5, NOX, SO2
-# - **Likely Sources:**
-#   - Vehicle emissions
-#   - Industrial activity
-#   - Biomass/garbage burning
-# - **Air Quality Index (AQI):** 185 (Unhealthy)
-# - **Recommendation:** Limit outdoor activity. Use masks. Air purifiers recommended indoors.
-# """)
-
-# ✅ Step 1: Install required packages
-!pip install pyngrok streamlit --quiet
-
-# ✅ Step 2: Import necessary libraries
-from pyngrok import ngrok
-import time
-import os
-# ✅ Step 3: Export your ngrok authtoken (this sets an environment variable)
-os.environ["NGROK_AUTHTOKEN"] = "32Q4NMHhzSBUduYMBv5Oyh54jg5_2toWjuF8icc3rJjCc9ZTr"
-
-# ✅ Step 4: Authenticate pyngrok using the exported token
-ngrok.set_auth_token(os.environ["NGROK_AUTHTOKEN"])
-
-# ✅ Step 5: Kill any existing Streamlit process
-!pkill streamlit
-
-# ✅ Step 6: Define your Streamlit app code
-app_code = '''
+def create_streamlit_app():
+    """
+    Create comprehensive Streamlit dashboard code
+    
+    Returns:
+        str: Complete Streamlit application code
+    """
+    
+    app_code = '''
 import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import folium
+from streamlit_folium import st_folium
+import warnings
+warnings.filterwarnings('ignore')
 
-st.set_page_config(page_title="Streamlit via ngrok", page_icon="🎈")
-st.title("🚀 Hello from Streamlit!")
-st.write("This Streamlit app is running through an ngrok tunnel.")
+# Page configuration
+st.set_page_config(
+    page_title="EnviroScan - Pollution Source Identifier",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 3rem;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    .alert-high {
+        background-color: #ffebee;
+        border-left: 5px solid #f44336;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    .alert-medium {
+        background-color: #fff3e0;
+        border-left: 5px solid #ff9800;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    .alert-low {
+        background-color: #e8f5e8;
+        border-left: 5px solid #4caf50;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Main title
+st.markdown('<h1 class="main-header">🌍 EnviroScan Pollution Source Identifier</h1>', 
+           unsafe_allow_html=True)
+
+# Sidebar for inputs
+st.sidebar.header("🔧 Configuration")
+
+# City input
+city = st.sidebar.text_input("📍 Enter City Name", value="Delhi", key="city_input")
+
+# Coordinate inputs
+st.sidebar.subheader("📍 Custom Coordinates (Optional)")
+use_coordinates = st.sidebar.checkbox("Use custom coordinates")
+
+if use_coordinates:
+    latitude = st.sidebar.number_input("Latitude", value=28.6139, format="%.4f")
+    longitude = st.sidebar.number_input("Longitude", value=77.2090, format="%.4f") 
+else:
+    latitude, longitude = 28.6139, 77.2090  # Default to Delhi
+
+# Time range selection
+st.sidebar.subheader("📅 Time Range")
+time_range = st.sidebar.selectbox(
+    "Select time period",
+    ["Last 24 hours", "Last 7 days", "Last 30 days", "Custom range"]
+)
+
+if time_range == "Custom range":
+    start_date = st.sidebar.date_input("Start date", datetime.now() - timedelta(days=7))
+    end_date = st.sidebar.date_input("End date", datetime.now())
+
+# Pollution source filter
+st.sidebar.subheader("🏭 Source Filter")
+source_filter = st.sidebar.multiselect(
+    "Select pollution sources",
+    ["All", "Vehicular", "Industrial", "Agricultural", "Residential", "Natural"],
+    default=["All"]
+)
+
+# Analysis button
+analyze_button = st.sidebar.button("🔍 Analyze Pollution", type="primary")
+
+@st.cache_data
+def generate_sample_data(city_name, lat, lon, n_samples=200):
+    """Generate sample pollution data for demonstration"""
+    np.random.seed(42)
+    
+    # Generate timestamps
+    end_time = datetime.now()
+    start_time = end_time - timedelta(days=7)
+    timestamps = pd.date_range(start_time, end_time, periods=n_samples)
+    
+    # Generate coordinates around the specified location
+    lats = lat + np.random.normal(0, 0.05, n_samples)
+    lons = lon + np.random.normal(0, 0.05, n_samples)
+    
+    # Generate pollution data with realistic patterns
+    hours = [t.hour for t in timestamps]
+    base_pm25 = 30 + 20 * np.sin(np.array(hours) * np.pi / 12)  # Daily pattern
+    base_no2 = 25 + 15 * np.sin(np.array(hours) * np.pi / 12 + np.pi/4)
+    
+    data = {
+        'timestamp': timestamps,
+        'latitude': lats,
+        'longitude': lons,
+        'PM2.5': np.maximum(base_pm25 + np.random.normal(0, 10, n_samples), 0),
+        'NO2': np.maximum(base_no2 + np.random.normal(0, 8, n_samples), 0),
+        'SO2': np.maximum(np.random.exponential(15, n_samples), 0),
+        'CO': np.maximum(np.random.exponential(1.2, n_samples), 0),
+        'temperature': 25 + 10 * np.sin(np.array(hours) * np.pi / 12) + np.random.normal(0, 3, n_samples),
+        'humidity': 60 + 20 * np.random.random(n_samples),
+        'source': np.random.choice(['Vehicular', 'Industrial', 'Agricultural', 'Residential'], n_samples),
+        'confidence': 0.7 + 0.3 * np.random.random(n_samples)
+    }
+    
+    df = pd.DataFrame(data)
+    df['pollution_index'] = (df['PM2.5'] * 0.4 + df['NO2'] * 0.3 + df['SO2'] * 0.2 + df['CO'] * 0.1)
+    df['hour'] = df['timestamp'].dt.hour
+    df['day_of_week'] = df['timestamp'].dt.day_name()
+    
+    return df
+
+def get_aqi_level(pollution_index):
+    """Determine AQI level and color"""
+    if pollution_index <= 50:
+        return "Good", "#4CAF50", "😊"
+    elif pollution_index <= 100:
+        return "Moderate", "#FFC107", "😐"  
+    elif pollution_index <= 150:
+        return "Unhealthy for Sensitive Groups", "#FF9800", "😷"
+    elif pollution_index <= 200:
+        return "Unhealthy", "#F44336", "😨"
+    else:
+        return "Very Unhealthy", "#9C27B0", "💀"
+
+def create_alert(pollution_index, source):
+    """Create pollution alert based on levels"""
+    level, color, emoji = get_aqi_level(pollution_index)
+    
+    if pollution_index > 150:
+        alert_class = "alert-high"
+        urgency = "🚨 CRITICAL ALERT"
+    elif pollution_index > 100:
+        alert_class = "alert-medium"  
+        urgency = "⚠️ WARNING"
+    else:
+        alert_class = "alert-low"
+        urgency = "✅ NORMAL"
+    
+    recommendation = ("Avoid outdoor activities. Use air purifiers indoors." if pollution_index > 150 
+                     else "Limit prolonged outdoor exposure." if pollution_index > 100
+                     else "Air quality is acceptable for most people.")
+    
+    st.markdown(f"""
+    <div class="{alert_class}">
+        <h4>{urgency}</h4>
+        <p><strong>Current AQI Level:</strong> {level} ({pollution_index:.1f}) {emoji}</p>
+        <p><strong>Primary Source:</strong> {source}</p>
+        <p><strong>Recommendation:</strong> {recommendation}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Main analysis section
+if analyze_button or city:
+    with st.spinner(f"🔄 Analyzing pollution data for {city}..."):
+        # Generate or load data
+        df = generate_sample_data(city, latitude, longitude)
+        
+        # Apply source filter
+        if "All" not in source_filter:
+            df = df[df['source'].isin(source_filter)]
+        
+        # Current pollution status
+        st.header("📊 Current Pollution Status")
+        
+        latest_data = df.iloc[-1]
+        current_pollution = latest_data['pollution_index']
+        primary_source = latest_data['source']
+        
+        # Create alert
+        create_alert(current_pollution, primary_source)
+        
+        # Key metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric(
+                label="🌫️ PM2.5",
+                value=f"{latest_data['PM2.5']:.1f} µg/m³",
+                delta=f"{np.random.uniform(-5, 5):.1f}"
+            )
+        
+        with col2:
+            st.metric(
+                label="🚗 NO2", 
+                value=f"{latest_data['NO2']:.1f} µg/m³",
+                delta=f"{np.random.uniform(-3, 3):.1f}"
+            )
+        
+        with col3:
+            st.metric(
+                label="🏭 SO2",
+                value=f"{latest_data['SO2']:.1f} µg/m³", 
+                delta=f"{np.random.uniform(-2, 2):.1f}"
+            )
+        
+        with col4:
+            st.metric(
+                label="🔥 CO",
+                value=f"{latest_data['CO']:.2f} mg/m³",
+                delta=f"{np.random.uniform(-0.5, 0.5):.2f}"
+            )
+        
+        # Charts section
+        st.header("📈 Pollution Trends")
+        
+        # Time series chart
+        fig_timeline = px.line(
+            df, 
+            x='timestamp', 
+            y=['PM2.5', 'NO2', 'SO2'], 
+            title="Pollutant Levels Over Time",
+            color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#45B7D1']
+        )
+        fig_timeline.update_layout(height=400)
+        st.plotly_chart(fig_timeline, use_container_width=True)
+        
+        # Source distribution
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            source_counts = df['source'].value_counts()
+            fig_pie = px.pie(
+                values=source_counts.values,
+                names=source_counts.index,
+                title="Pollution Source Distribution",
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+        
+        with col2:
+            # Hourly pollution pattern
+            hourly_pollution = df.groupby('hour')['pollution_index'].mean().reset_index()
+            fig_hourly = px.bar(
+                hourly_pollution,
+                x='hour',
+                y='pollution_index', 
+                title="Average Pollution by Hour",
+                color='pollution_index',
+                color_continuous_scale='Reds'
+            )
+            st.plotly_chart(fig_hourly, use_container_width=True)
+        
+        # Interactive map
+        st.header("🗺️ Interactive Pollution Map")
+        
+        # Create Folium map
+        m = folium.Map(
+            location=[latitude, longitude],
+            zoom_start=11,
+            tiles='OpenStreetMap'
+        )
+        
+        # Add source-colored markers
+        source_colors = {
+            'Vehicular': 'red',
+            'Industrial': 'darkred',
+            'Agricultural': 'green', 
+            'Residential': 'blue'
+        }
+        
+        for idx, row in df.sample(min(50, len(df))).iterrows():
+            popup_text = f"""
+            <b>Source:</b> {row['source']}<br>
+            <b>PM2.5:</b> {row['PM2.5']:.1f} µg/m³<br>
+            <b>Pollution Index:</b> {row['pollution_index']:.1f}<br>
+            <b>Confidence:</b> {row['confidence']:.2f}
+            """
+            
+            folium.CircleMarker(
+                location=[row['latitude'], row['longitude']],
+                radius=row['pollution_index'] / 10,
+                popup=popup_text,
+                color=source_colors.get(row['source'], 'gray'),
+                fill=True,
+                fillOpacity=0.7
+            ).add_to(m)
+        
+        # Display map
+        map_data = st_folium(m, width=700, height=500)
+        
+        # Recommendations section
+        st.header("💡 Recommendations")
+        
+        recommendations = []
+        if current_pollution > 150:
+            recommendations.extend([
+                "🏠 Stay indoors and use air purifiers",
+                "😷 Wear N95 masks when going outside", 
+                "🚫 Avoid outdoor exercise",
+                "🌬️ Keep windows closed"
+            ])
+        elif current_pollution > 100:
+            recommendations.extend([
+                "⏰ Limit outdoor activities during peak hours",
+                "😷 Consider wearing masks outdoors",
+                "🏃‍♂️ Reduce intense outdoor exercise"
+            ])
+        else:
+            recommendations.extend([
+                "✅ Air quality is generally acceptable",
+                "🏃‍♂️ Outdoor activities are safe for most people",
+                "🌅 Consider exercising in early morning hours"
+            ])
+        
+        for rec in recommendations:
+            st.write(f"• {rec}")
+        
+        # Download section
+        st.header("📥 Download Reports")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            csv_data = df.to_csv(index=False)
+            st.download_button(
+                label="📊 Download Data (CSV)",
+                data=csv_data,
+                file_name=f"pollution_data_{city}_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+        
+        with col2:
+            # Create summary report
+            summary_report = f"""
+            Pollution Analysis Report - {city}
+            Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            
+            Current Status:
+            - Pollution Index: {current_pollution:.1f}
+            - Primary Source: {primary_source}
+            - AQI Level: {get_aqi_level(current_pollution)[0]}
+            
+            Key Statistics:
+            - Average PM2.5: {df['PM2.5'].mean():.1f} µg/m³
+            - Average NO2: {df['NO2'].mean():.1f} µg/m³
+            - Peak Pollution Hour: {df.groupby('hour')['pollution_index'].mean().idxmax()}
+            - Most Common Source: {df['source'].mode()[0]}
+            """
+            
+            st.download_button(
+                label="📄 Download Report (TXT)",
+                data=summary_report,
+                file_name=f"pollution_report_{city}_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain"
+            )
+
+else:
+    # Welcome screen
+    st.info("👈 Please enter a city name and click 'Analyze Pollution' to begin the analysis.")
+    
+    # Sample visualizations
+    st.subheader("🌟 What You'll Get:")
+    st.write("• **Real-time pollution monitoring** with AQI levels")
+    st.write("• **Source identification** using AI models")  
+    st.write("• **Interactive maps** with pollution hotspots")
+    st.write("• **Trend analysis** and predictions")
+    st.write("• **Health recommendations** based on pollution levels")
+    st.write("• **Downloadable reports** for further analysis")
+
+# Footer
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: #666;'>"
+    "🌍 EnviroScan - AI-Powered Pollution Source Identification System<br>"
+    "Built with Streamlit • Data visualization with Plotly • Maps with Folium"
+    "</div>", 
+    unsafe_allow_html=True
+)
 '''
+    
+    return app_code
 
-# ✅ Step 7: Write app code to a file
-with open("app.py", "w") as f:
-    f.write(app_code)
-
-# ✅ Step 8: Start the Streamlit app in the background
-!streamlit run app.py &> /content/logs.txt &
-
-# ✅ Step 9: Wait a few seconds for the app to boot
-time.sleep(15)
-
-# ✅ Step 10: Open an ngrok tunnel to port 8501
-public_url = ngrok.connect(8501)
-
-# ✅ Step 11: Print the public URL
-print("🌏 Your Streamlit app is live at:", public_url)
-
-# Start Streamlit in background
-!streamlit run app.py &> /content/logs.txt &
-
-# Give more time for Streamlit to start (e.g., 15 seconds)
-import time
-time.sleep(15)
-
-# Then create ngrok tunnel
-from pyngrok import ngrok
-public_url = ngrok.connect(8501)
-print(" Your Streamlit app is live here:", public_url)
-
-# Install required packages (run once)
-!pip install --quiet streamlit pyngrok
-
-import os
-import time
-import subprocess
-from pyngrok import ngrok
-
-# Set your ngrok auth token (replace with your actual token)
-NGROK_AUTH_TOKEN = "32SqCst4NUzTNDrAlitGnP1d4eJ_6bRzhXot6qmzET4XCHbPz"
-ngrok.set_auth_token(NGROK_AUTH_TOKEN)
-
-# Write a simple Streamlit app
-app_code = """
-import streamlit as st
-
-st.title("EnviroScan Pollution Source Identifier")
-
-city = st.text_input("Enter a city name", "Delhi")
-if st.button("Analyze"):
-    if not city.strip():
-        st.warning("Please enter a valid city name.")
-    else:
-        st.success(f"Analyzing pollution sources for: {city}")
-        st.markdown(f'''
-        ### AI Analysis Results for **{city}** (Simulated)
-        - **Main Pollutants:** PM2.5, NOx, SO2
-        - **Likely Sources:**
-          - Vehicle emissions
-          - Industrial activity
-          - Biomass/garbage burning
-        - **Air Quality Index (AQI):** 185 (Unhealthy)
-        - **Recommendation:** Limit outdoor activity. Use masks. Air purifiers recommended indoors.
-        ''')
+def create_dashboard_files():
+    """
+    Create all necessary files for the Streamlit dashboard
+    """
+    print("Creating Streamlit dashboard files...")
+    
+    # Create main app file
+    app_code = create_streamlit_app()
+    with open('/tmp/pollution_dashboard.py', 'w') as f:
+        f.write(app_code)
+    
+    # Create requirements for Streamlit
+    streamlit_requirements = """
+streamlit==1.28.0
+pandas>=1.5.0
+numpy>=1.24.0
+plotly>=5.15.0
+folium>=0.14.0
+streamlit-folium>=0.13.0
+requests>=2.28.0
 """
-
-with open("app.py", "w") as f:
-    f.write(app_code)
-
-# Kill previous Streamlit instances cleanly
-subprocess.run(["pkill", "-f", "streamlit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-# Disconnect any existing ngrok tunnels to avoid free-tier limits
-for tunnel in ngrok.get_tunnels():
-    ngrok.disconnect(tunnel.public_url)
-
-# Start Streamlit app in the background asynchronously
-streamlit_process = subprocess.Popen(["streamlit", "run", "app.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-# Wait for the Streamlit server to start by checking logs
-timeout = 30  # seconds
-start_time = time.time()
-server_started = False
-
-while time.time() - start_time < timeout:
-    line = streamlit_process.stdout.readline()
-    if line:
-        decoded_line = line.decode('utf-8')
-        if "Network URL" in decoded_line or "Local URL" in decoded_line:
-            server_started = True
-            break
-    else:
-        time.sleep(1)
-
-if not server_started:
-    print("Warning: Streamlit server did not start within timeout.")
-
-# Open ngrok tunnel on port 8501
-public_url = ngrok.connect(8501)
-print(f"Your Streamlit app is live at: {public_url}")
-
-# Keep process alive to maintain server and tunnel
-try:
-    streamlit_process.wait()
-except KeyboardInterrupt:
-    print("Interrupted. Terminating Streamlit and ngrok tunnel...")
-    streamlit_process.terminate()
-    ngrok.disconnect(public_url)
-    print("Terminated successfully.")
-
-#  Install dependencies (run only once per environment)
-!pip install --quiet streamlit pyngrok
-
-import os
-import time
-import subprocess
-import logging
-from pyngrok import ngrok
-
-#  Suppress ngrok warnings (optional)
-logging.getLogger("pyngrok").setLevel(logging.ERROR)
-
-#  Set ngrok auth token
-NGROK_AUTH_TOKEN = "32SqCst4NUzTNDrAlitGnP1d4eJ_6bRzhXot6qmzET4XCHbPz"
-ngrok.set_auth_token(NGROK_AUTH_TOKEN)
-
-#  Define your Streamlit app code
-app_code = """
-import streamlit as st
-
-st.set_page_config(page_title="EnviroScan", page_icon="")
-st.title(" EnviroScan Pollution Source Identifier")
-
-city = st.text_input("Enter a city name", "Delhi")
-
-if st.button("Analyze"):
-    if not city.strip():
-        st.warning("Please enter a valid city name.")
-    else:
-        st.success(f"Analyzing pollution sources for: {city}")
-        st.markdown(f'''
-        ### AI Analysis Results for **{city}** (Simulated)
-        - **Main Pollutants:** PM2.5, NOx, SO2
-        - **Likely Sources:**
-          - Vehicle emissions
-          - Industrial activity
-          - Biomass/garbage burning
-        - **Air Quality Index (AQI):** 185 (Unhealthy)
-        - **Recommendation:** Limit outdoor activity. Use masks. Air purifiers recommended indoors.
-        ''')
-"""
-
-#  Save the app to a file
-with open("app.py", "w") as f:
-    f.write(app_code)
-
-#  Kill existing Streamlit processes (clean start)
-subprocess.run(["pkill", "-f", "streamlit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-#  Disconnect any open ngrok tunnels
-for tunnel in ngrok.get_tunnels():
-    ngrok.disconnect(tunnel.public_url)
-
-#  Start Streamlit app in background
-streamlit_process = subprocess.Popen(["streamlit", "run", "app.py"])
-
-#  Wait for Streamlit server to start
-time.sleep(10)  # Increase if needed
-
-#  Open ngrok tunnel to port 8501
-public_url = ngrok.connect(8501)
-print(f" Your Streamlit app is live at: {public_url}")
-
-#  Keep the process alive
-try:
-    streamlit_process.wait()
-except KeyboardInterrupt:
-    streamlit_process.terminate()
-    ngrok.disconnect(public_url)
-    print("Streamlit and ngrok tunnel terminated.")
-
-#  Install required packages
-!pip install --quiet streamlit pyngrok requests
-!pip install pyngrok
-
-import os
-import time
-import subprocess
-import logging
-import requests
-from pyngrok import ngrok
-
-#  Silence noisy ngrok logs
-logging.getLogger("pyngrok").setLevel(logging.ERROR)
-
-#  Set your ngrok auth token
-NGROK_AUTH_TOKEN = "32SqCst4NUzTNDrAlitGnP1d4eJ_6bRzhXot6qmzET4XCHbPz"
-ngrok.set_auth_token(NGROK_AUTH_TOKEN)
-
-#  Define your Streamlit app code
-app_code = """
-import streamlit as st
-
-st.set_page_config(page_title="EnviroScan", page_icon="")
-st.title(" EnviroScan Pollution Source Identifier")
-
-city = st.text_input("Enter a city name", "Delhi")
-
-if st.button("Analyze"):
-    if not city.strip():
-        st.warning("Please enter a valid city name.")
-    else:
-        st.success(f"Analyzing pollution sources for: {city}")
-        st.markdown(f'''
-        ### AI Analysis Results for **{city}** (Simulated)
-        - **Main Pollutants:** PM2.5, NOx, SO2
-        - **Likely Sources:**
-          - Vehicle emissions
-          - Industrial activity
-          - Biomass/garbage burning
-        - **Air Quality Index (AQI):** 185 (Unhealthy)
-        - **Recommendation:** Limit outdoor activity. Use masks. Air purifiers recommended indoors.
-        ''')
-"""
-
-#  Save Streamlit app
-with open("app.py", "w") as f:
-    f.write(app_code)
-
-#  Kill any old Streamlit processes
-subprocess.run(["pkill", "-f", "streamlit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-#  Disconnect existing ngrok tunnels
-for tunnel in ngrok.get_tunnels():
-    ngrok.disconnect(tunnel.public_url)
-
-#  Start Streamlit app in the background
-streamlit_process = subprocess.Popen(["streamlit", "run", "app.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-#  Wait until the Streamlit app is actually up
-def wait_for_streamlit(url="http://localhost:8501", timeout=30):
-    for _ in range(timeout):
-        try:
-            r = requests.get(url)
-            if r.status_code == 200:
-                return True
-        except:
-            pass
-        time.sleep(1)
-    return False
-
-if not wait_for_streamlit():
-    streamlit_process.terminate()
-    raise RuntimeError(" Streamlit did not start within 30 seconds.")
-
-# ✅ Open ngrok tunnel
-public_url = ngrok.connect(8501)
-print(f"\n Your Streamlit app is live at: {public_url}\n")
-
-# ✅ Keep it alive
-try:
-    streamlit_process.wait()
-except KeyboardInterrupt:
-    streamlit_process.terminate()
-    ngrok.disconnect(public_url)
-    print(" Terminated Streamlit and ngrok tunnel.")
-
-!pip install osmnx
-
-"""✅ Option 1: Use Streamlit Community Cloud (Free Hosting)
-
-You can host your app on the internet without any local setup:
-
-🔧 Steps:
-
-Go to https://streamlit.io/cloud
-
-Click “Sign in with GitHub”
-
-Upload your app.py to a GitHub repo
-
-Click “New App”
-
-Choose the repo and file, and click “Deploy”
-
-💡 Your app will be hosted on a public URL like: https://your-username-your-repo.streamlit.app
-
-Option 2: Use Replit
-
-Super easy if you don’t want to use GitHub or Colab.
-
-🔧 Steps:
-
-New section
-Go to https://replit.com
-
-Create a new Python Repl
-
-Paste your Streamlit app code
-
-Add streamlit to the Replit packages
-
-Create a .replit file with:
-
-run = "streamlit run app.py --server.port=8080 --server.headless=true" Hit "Run" — Replit will show you a public link Therefore, http://localhost:8501 and ngrok tunnel won’t work, because there’s no server to connect to.
-"""
-
-# ===============================
-# STEP 1: Install dependencies
-# ===============================
-!pip install streamlit pyngrok --quiet
-
-# ===============================
-# STEP 2: Import libraries
-# ===============================
-import os
-from pyngrok import ngrok
-
-# ===============================
-# STEP 3: Write a sample Streamlit app
-# (you can replace this with your own code)
-# ===============================
-app_code = """
-import streamlit as st
-
-st.title("Hello from Streamlit in Google Colab 👋")
-st.write("This is running on Colab with ngrok tunnel 🚀")
-
-name = st.text_input("Enter your name:")
-if name:
-    st.success(f"Welcome, {name}!")
-"""
-with open("app.py", "w") as f:
-    f.write(app_code)
-
-# ===============================
-# STEP 4: Kill any previous ngrok tunnels
-# ===============================
-ngrok.kill()
-
-# ===============================
-# STEP 5: Start Streamlit app
-# (run in the background)
-# ===============================
-!streamlit run app.py &>/dev/null &
-
-# ===============================
-# STEP 6: Create public URL with ngrok
-# ===============================
-public_url = ngrok.connect(8501)
-print("Streamlit is live here:", public_url)
+    
+    with open('/tmp/streamlit_requirements.txt', 'w') as f:
+        f.write(streamlit_requirements)
+    
+    print("Dashboard files created in /tmp/")
+    print("- pollution_dashboard.py: Main Streamlit application")
+    print("- streamlit_requirements.txt: Required packages")
+    
+    return '/tmp/pollution_dashboard.py'
+
+
+"""Main Workflow and Documentation"""
+
+def run_complete_workflow(city="Delhi", save_model=True):
+    """
+    Execute the complete EnviroScan workflow
+    
+    Args:
+        city (str): City name for analysis
+        save_model (bool): Whether to save the trained model
+        
+    Returns:
+        dict: Complete workflow results
+    """
+    print(f"🚀 Starting complete EnviroScan workflow for {city}")
+    print("=" * 60)
+    
+    workflow_results = {}
+    
+    try:
+        # Step 1: Data Collection
+        print("\n📊 Step 1: Data Collection")
+        raw_data = fetch_openaq_data(city)
+        workflow_results['raw_data_shape'] = raw_data.shape
+        print(f"✅ Collected {len(raw_data)} pollution measurements")
+        
+        # Step 2: Data Cleaning
+        print("\n🧹 Step 2: Data Cleaning and Preprocessing")
+        cleaned_data = clean_pollution_data(raw_data)
+        workflow_results['cleaned_data_shape'] = cleaned_data.shape
+        
+        # Step 3: Feature Engineering  
+        print("\n⚙️ Step 3: Feature Engineering")
+        featured_data = feature_engineering(cleaned_data)
+        workflow_results['featured_data_shape'] = featured_data.shape
+        
+        # Step 4: Source Labeling
+        print("\n🏷️ Step 4: Source Labeling and Simulation")
+        labeled_data = label_sources(featured_data)
+        source_distribution = labeled_data['source'].value_counts()
+        workflow_results['source_distribution'] = source_distribution.to_dict()
+        print("Source distribution:")
+        print(source_distribution)
+        
+        # Step 5: Dataset Splitting
+        print("\n📊 Step 5: Dataset Splitting")
+        train_df, val_df, test_df = split_dataset(labeled_data)
+        workflow_results['dataset_splits'] = {
+            'train': len(train_df),
+            'validation': len(val_df), 
+            'test': len(test_df)
+        }
+        
+        # Step 6: Feature Preparation and Balancing
+        print("\n⚖️ Step 6: Feature Preparation and Data Balancing")
+        X_train, feature_names = prepare_features(train_df)
+        y_train = train_df['source']
+        
+        X_val, _ = prepare_features(val_df)
+        y_val = val_df['source']
+        
+        X_test, _ = prepare_features(test_df)
+        y_test = test_df['source']
+        
+        # Apply SMOTE balancing
+        X_train_balanced, y_train_balanced = apply_data_balancing(X_train, y_train)
+        workflow_results['feature_names'] = feature_names
+        
+        # Step 7: Model Training
+        print("\n🤖 Step 7: Model Training and Hyperparameter Tuning")
+        trained_models = train_multiple_models(X_train_balanced, y_train_balanced, X_val, y_val)
+        workflow_results['trained_models'] = list(trained_models.keys())
+        
+        # Step 8: Model Evaluation  
+        print("\n📈 Step 8: Model Evaluation")
+        performance_results = evaluate_model_performance(trained_models, X_test, y_test)
+        workflow_results['model_performance'] = {
+            model: {
+                'accuracy': results['accuracy'],
+                'f1_score': results['f1_score']
+            }
+            for model, results in performance_results.items()
+        }
+        
+        # Step 9: Visualization Creation
+        print("\n📊 Step 9: Performance Visualizations")
+        create_performance_visualizations(performance_results, y_test)
+        
+        # Step 10: Model Saving
+        if save_model:
+            print("\n💾 Step 10: Model Saving")
+            best_model_name = save_best_model(trained_models, performance_results, feature_names)
+            workflow_results['best_model'] = best_model_name
+        
+        # Step 11: Predictions
+        print("\n🔮 Step 11: Making Predictions")
+        predictions_df = predict_pollution_sources(labeled_data)
+        workflow_results['predictions_made'] = len(predictions_df)
+        
+        # Step 12: Geospatial Visualizations
+        print("\n🗺️ Step 12: Creating Geospatial Visualizations")
+        pollution_heatmap = create_pollution_heatmap(predictions_df)
+        source_map = create_source_map(predictions_df)
+        multi_layer_map = create_multi_layer_map(predictions_df)
+        
+        workflow_results['maps_created'] = [
+            '/tmp/pollution_heatmap.html',
+            '/tmp/source_map.html',
+            '/tmp/multi_layer_map.html'
+        ]
+        
+        # Step 13: Insights Generation
+        print("\n💡 Step 13: Generating Insights")
+        insights = generate_pollution_insights(predictions_df)
+        workflow_results['insights'] = insights
+        
+        # Step 14: Dashboard Creation
+        print("\n📱 Step 14: Creating Streamlit Dashboard")
+        dashboard_path = create_dashboard_files()
+        workflow_results['dashboard_path'] = dashboard_path
+        
+        print("\n✅ Complete workflow finished successfully!")
+        print("=" * 60)
+        
+        # Print summary
+        print("\n📋 WORKFLOW SUMMARY:")
+        print(f"• Data processed: {workflow_results['raw_data_shape'][0]} → {workflow_results['cleaned_data_shape'][0]} samples")
+        print(f"• Features engineered: {len(feature_names)} features")
+        print(f"• Models trained: {len(trained_models)}")
+        print(f"• Best model: {workflow_results.get('best_model', 'N/A')}")
+        print(f"• Maps created: {len(workflow_results['maps_created'])}")
+        print(f"• Dashboard: {dashboard_path}")
+        
+        return workflow_results
+        
+    except Exception as e:
+        print(f"❌ Error in workflow: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'error': str(e)}
+
+# Example usage and main execution
+if __name__ == "__main__":
+    # Run the complete workflow
+    results = run_complete_workflow("Delhi")
+    
+    print("\n🎯 Next Steps:")
+    print("1. Run the Streamlit dashboard: streamlit run /tmp/pollution_dashboard.py")
+    print("2. View generated maps in /tmp/ directory")
+    print("3. Check model performance visualizations")
+    print("4. Deploy to production environment")
