@@ -128,14 +128,14 @@ def test_visualization():
         ).add_to(m)
     
     # Save test map
-    m.save('/tmp/test_map_output.html')
+    m.save('test_map_output.html')
     
     # Test matplotlib
     plt.figure(figsize=(8, 6))
     df['source'].value_counts().plot(kind='bar')
     plt.title('Source Distribution Test')
     plt.tight_layout()
-    plt.savefig('/tmp/test_chart_output.png')
+    plt.savefig('test_chart_output.png')
     plt.close()
     
     print("✅ Visualization test passed")
@@ -150,12 +150,12 @@ def test_dashboard_creation():
     app_code = create_dashboard_app()
     
     # Save dashboard
-    with open('/tmp/test_dashboard.py', 'w') as f:
+    with open('test_dashboard.py', 'w') as f:
         f.write(app_code)
     
     # Check if file was created and has content
-    if os.path.exists('/tmp/test_dashboard.py'):
-        with open('/tmp/test_dashboard.py', 'r') as f:
+    if os.path.exists('test_dashboard.py'):
+        with open('test_dashboard.py', 'r') as f:
             content = f.read()
             if len(content) > 1000:  # Should be substantial
                 print("✅ Dashboard creation test passed")

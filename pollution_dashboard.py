@@ -1,12 +1,4 @@
-#!/usr/bin/env python3
-"""
-Create Streamlit Dashboard for EnviroScan
-"""
-
-def create_dashboard_app():
-    """Create the Streamlit dashboard app"""
-    
-    app_code = '''import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -394,17 +386,3 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
-'''
-    
-    return app_code
-
-if __name__ == "__main__":
-    print("Creating Streamlit dashboard...")
-    app_code = create_dashboard_app()
-    
-    dashboard_path = 'pollution_dashboard.py'
-    with open(dashboard_path, 'w', encoding='utf-8') as f:
-        f.write(app_code)
-    
-    print(f"Dashboard created at {dashboard_path}")
-    print(f"Run with: streamlit run {dashboard_path}")
