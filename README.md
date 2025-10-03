@@ -1,32 +1,35 @@
-# EnviroScan: AI-Powered Pollution Source Identification System
+# EnviroScan: AI-Powered Air Quality Monitoring Dashboard
 
-A comprehensive system for pollution data analysis, source prediction, and real-time monitoring. This project implements machine learning algorithms to identify pollution sources, create interactive visualizations, and provide real-time alerts through a web dashboard.
+A comprehensive real-time air quality monitoring system with AI-powered pollution source identification. This project integrates live AQI data from global monitoring stations, provides interactive visualizations, PDF report generation, and implements machine learning algorithms for pollution source prediction and analysis.
 
 ## 🌟 Features
 
-### Data Processing & Analysis
-- **Automated Data Collection**: Fetches pollution data from OpenAQ API with fallback to synthetic data
-- **Comprehensive Data Cleaning**: Handles missing values, outliers, and data type conversions
-- **Advanced Feature Engineering**: Creates temporal, spatial, and composite pollution features
-- **Smart Source Labeling**: Rule-based and simulation-based pollution source identification
+### Real-Time Air Quality Data
+- **Live AQI Integration**: Real-time data from WAQI (World Air Quality Index) API
+- **Global Coverage**: Access to thousands of monitoring stations worldwide
+- **Weather Integration**: Temperature, humidity, and weather conditions via OpenWeather API
+- **Smart Fallback**: Automatic fallback to synthetic data when APIs are unavailable
+- **Data Caching**: Intelligent caching to prevent API rate limiting
 
-### Machine Learning
+### Interactive Dashboard
+- **Multi-View Interface**: Historical AQI, Future Predictions, and Real-Time monitoring
+- **PDF Report Generation**: Professional pollution reports with charts and data tables
+- **CSV Data Export**: Download raw data for further analysis
+- **Theme Support**: Light and dark mode with optimized visibility
+- **Mobile Responsive**: Optimized for desktop and mobile viewing
+
+### Advanced Visualizations
+- **Interactive Maps**: Real-time AQI visualization with Folium integration
+- **Time Series Charts**: Historical pollution trends with Plotly
+- **Pollution Forecasts**: AI-powered predictions for future AQI levels
+- **Station-Specific Data**: Detailed information for individual monitoring stations
+- **Performance Optimized**: Anti-flicker technology for smooth real-time updates
+
+### Machine Learning & Analytics
 - **Multiple Model Training**: Random Forest, Logistic Regression, and Neural Network models
-- **Hyperparameter Optimization**: Grid search with cross-validation for optimal performance
-- **Data Balancing**: SMOTE implementation for handling class imbalance
-- **Performance Evaluation**: Comprehensive metrics including accuracy, F1-score, and confusion matrices
-
-### Geospatial Visualization
-- **Interactive Heatmaps**: Pollution concentration visualization using Folium
-- **Source-Specific Maps**: Color-coded markers for different pollution sources
-- **Multi-Layer Maps**: Comprehensive visualization with multiple data layers
-- **Export Capabilities**: Save maps as HTML files for sharing
-
-### Real-Time Dashboard
-- **Interactive Web Interface**: Built with Streamlit for real-time monitoring
-- **Pollution Alerts**: Automated alerts based on AQI levels
-- **Trend Analysis**: Time series charts and hourly pollution patterns
-- **Data Export**: Download pollution reports in CSV and TXT formats
+- **Source Identification**: AI-powered pollution source classification
+- **Predictive Analytics**: Future AQI forecasting based on historical patterns
+- **Data Processing**: Comprehensive data cleaning and feature engineering
 
 ## 🚀 Quick Start
 
@@ -35,17 +38,57 @@ A comprehensive system for pollution data analysis, source prediction, and real-
 pip install -r requirements.txt
 ```
 
+### Launch the Dashboard
+```bash
+# Run the main Streamlit dashboard
+streamlit run streamlit_dashboard.py
+```
+
+### Enable Real AQI Data (Optional)
+1. Get free API keys:
+   - [WAQI API](https://aqicn.org/api/) for air quality data
+   - [OpenWeather API](https://openweathermap.org/api) for weather data (optional)
+
+2. Configure API keys in `real_aqi_data.py`:
+```python
+WAQI_TOKEN = "your_waqi_token_here"
+OPENWEATHER_API_KEY = "your_openweather_key_here"
+```
+
+3. Enable real data in the dashboard sidebar
+
 ### Basic Usage
 ```python
-# Import the main module
-from enviroscan2_complete import run_complete_workflow
+# Import data processing functions
+from data_loader import run_complete_workflow
 
 # Run the complete analysis workflow
 results = run_complete_workflow("Delhi")
 
-# Launch the dashboard
-# streamlit run /tmp/pollution_dashboard.py
+# Use real AQI data
+from real_aqi_data import get_live_aqi_data
+data = get_live_aqi_data("Delhi")
 ```
+
+## 📁 Project Structure
+
+```
+EnviroScan/
+├── streamlit_dashboard.py      # Main dashboard application
+├── real_aqi_data.py           # Real AQI data integration
+├── data_loader.py             # Data processing and ML models
+├── enviroscan2.py             # Utility functions and ngrok setup
+├── requirements.txt           # Python dependencies
+├── REAL_DATA_SETUP.md        # API setup guide
+├── USAGE.md                  # Usage instructions
+└── README.md                 # This file
+```
+
+### Key Files
+- **`streamlit_dashboard.py`**: Main web application with three views (Historical, Prediction, Real-time)
+- **`real_aqi_data.py`**: API integration for live air quality data from WAQI and OpenWeather
+- **`data_loader.py`**: Advanced data processing, ML models, and analysis functions
+- **`REAL_DATA_SETUP.md`**: Step-by-step guide for setting up real AQI data APIs
 
 ### Running Individual Components
 
@@ -147,31 +190,62 @@ The system trains and compares three machine learning models:
 
 ## 📱 Dashboard Features
 
+### Three Main Views
+1. **Historical AQI**: Analyze past air quality trends with interactive charts
+2. **Future Prediction**: AI-powered forecasting for upcoming air quality
+3. **Real-Time AQI**: Live monitoring with global station data
+
 ### Real-Time Monitoring
-- Current pollution status with AQI levels
-- Automated alerts based on pollution thresholds
-- Real-time metric updates with delta indicators
+- Live AQI data from global monitoring stations
+- Station-specific information with coordinates
+- Weather integration (temperature, humidity, conditions)
+- Auto-refresh functionality with configurable intervals
+- Anti-flicker technology for smooth updates
 
 ### Interactive Elements
-- City and coordinate input
-- Time range selection
-- Pollution source filtering
-- Interactive maps with zoom and pan
+- City selection with global coverage
+- Real/synthetic data toggle
+- Theme switcher (light/dark mode)
+- Interactive maps with zoom and clustering
+- Time-based data filtering
+- Station selection dropdown
 
-### Data Export
-- CSV format for raw data
-- TXT format for summary reports
-- Customizable file naming with timestamps
+### Export & Reporting
+- **PDF Reports**: Professional pollution reports with:
+  - Executive summary and recommendations
+  - Data tables with pollution measurements
+  - Charts and visualizations
+  - Customizable report headers
+- **CSV Export**: Raw data download for analysis
+- **Interactive Maps**: Exportable HTML maps
+
+### Performance Features
+- **Data Caching**: Intelligent caching to reduce API calls
+- **Error Handling**: Graceful fallback to synthetic data
+- **Mobile Responsive**: Optimized for all device sizes
+- **Fast Loading**: Optimized rendering and data processing
 
 ## 🛠️ Configuration
 
-### API Configuration
+### Real AQI Data APIs
 ```python
-# OpenAQ API (optional - system works with sample data)
-OPENAQ_API_URL = "https://api.openaq.org/v2/measurements"
+# WAQI (World Air Quality Index) API
+WAQI_TOKEN = "your_waqi_token_here"  # Get from https://aqicn.org/api/
+WAQI_BASE_URL = "https://api.waqi.info"
 
-# OpenWeatherMap API (optional)
-WEATHER_API_KEY = "your_api_key_here"
+# OpenWeather API (optional)
+OPENWEATHER_API_KEY = "your_openweather_key_here"  # Get from https://openweathermap.org/api
+OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
+```
+
+### Dashboard Configuration
+```python
+# Enable/disable real data in dashboard
+USE_REAL_DATA = True  # Toggle in sidebar
+
+# Data refresh intervals
+REFRESH_INTERVAL = 300  # 5 minutes for real-time data
+CACHE_TTL = 1800  # 30 minutes for cached data
 ```
 
 ### Model Parameters
@@ -194,17 +268,22 @@ POLLUTION_THRESHOLDS = {
 ## 📋 Requirements
 
 ### Core Dependencies
-- pandas >= 1.5.0
-- numpy >= 1.24.0
-- scikit-learn >= 1.3.0
-- streamlit >= 1.28.0
-- folium >= 0.14.0
-- plotly >= 5.15.0
+- streamlit >= 1.28.0 (web dashboard framework)
+- pandas >= 1.5.0 (data manipulation)
+- numpy >= 1.24.0 (numerical computing)
+- plotly >= 5.15.0 (interactive charts)
+- folium >= 0.14.0 (interactive maps)
+- requests >= 2.31.0 (API integration)
+- reportlab >= 4.0.0 (PDF generation)
+
+### Machine Learning Dependencies
+- scikit-learn >= 1.3.0 (ML models)
+- imbalanced-learn >= 0.11.0 (SMOTE for data balancing)
 
 ### Optional Dependencies
-- osmnx >= 1.6.0 (for geospatial features)
-- geopy >= 2.3.0 (for distance calculations)
-- imbalanced-learn >= 0.11.0 (for SMOTE)
+- osmnx >= 1.6.0 (advanced geospatial features)
+- geopy >= 2.3.0 (distance calculations)
+- seaborn >= 0.12.0 (statistical visualizations)
 
 ## 🚀 Deployment
 
@@ -213,26 +292,31 @@ POLLUTION_THRESHOLDS = {
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the complete workflow
-python enviroscan2_complete.py
-
-# Launch dashboard
-streamlit run /tmp/pollution_dashboard.py
+# Launch the dashboard
+streamlit run streamlit_dashboard.py
 ```
 
 ### Streamlit Cloud Deployment
-1. Push code to GitHub repository
-2. Connect to Streamlit Cloud
-3. Deploy with automatic updates
+1. Fork this repository
+2. Connect to [Streamlit Cloud](https://streamlit.io/cloud)
+3. Deploy with `streamlit_dashboard.py` as the main file
+4. Add API keys in Streamlit Cloud secrets:
+   ```toml
+   [secrets]
+   WAQI_TOKEN = "your_waqi_token_here"
+   OPENWEATHER_API_KEY = "your_openweather_key_here"
+   ```
 
 ### Docker Deployment
 ```dockerfile
 FROM python:3.9-slim
+WORKDIR /app
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 EXPOSE 8501
-CMD ["streamlit", "run", "pollution_dashboard.py"]
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+CMD ["streamlit", "run", "streamlit_dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
 ```
 
 ## 🔍 Troubleshooting
@@ -297,8 +381,28 @@ For issues and questions:
 - Check the troubleshooting section
 - Review the documentation
 
+## 🆕 Recent Updates
+
+### Version 2.0.0 (October 2024)
+- ✅ Real AQI data integration with WAQI API
+- ✅ Professional PDF report generation
+- ✅ Enhanced dashboard with three distinct views
+- ✅ Weather data integration via OpenWeather API
+- ✅ Anti-flicker real-time updates
+- ✅ Improved theme support and accessibility
+- ✅ Mobile-responsive design
+- ✅ Performance optimization and caching
+
+### Version 1.0.0 (September 2024)
+- ✅ Initial release with synthetic data
+- ✅ Machine learning model integration
+- ✅ Basic dashboard functionality
+- ✅ Geospatial visualization
+
 ---
 
-**Last Updated**: September 2024  
-**Version**: 1.0.0  
-**Status**: Production Ready
+**Last Updated**: October 2024  
+**Version**: 2.0.0  
+**Status**: Production Ready with Real Data Integration  
+**Live Demo**: [Available on Streamlit Cloud]  
+**Repository**: [GitHub](https://github.com/amishiverma/Amishi-Verma)
