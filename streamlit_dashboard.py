@@ -15,6 +15,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 import io
 import base64
+# Import real AQI data integration
+from real_aqi_data import get_live_aqi_data, get_live_historical_data, RealAQIData
 warnings.filterwarnings('ignore')
 
 # Page config
@@ -503,6 +505,27 @@ st.sidebar.subheader("Select City")
 cities = list(CITY_COORDS.keys())
 location = st.sidebar.selectbox("", cities, index=0, label_visibility="collapsed")
 
+# API Configuration Section
+st.sidebar.subheader("🔧 API Configuration")
+use_real_data = st.sidebar.checkbox("Use Real AQI Data", value=False, help="Enable real-time data from air quality APIs")
+
+if use_real_data:
+    st.sidebar.write("📡 **API Status:**")
+    
+    # Test API connections
+    if st.sidebar.button("Test API Connection"):
+        real_data = RealAQIData()
+        real_data.test_api_connections()
+    
+    st.sidebar.info("""
+    **To use real data:**
+    1. Get free API key from [aqicn.org](https://aqicn.org/api/)
+    2. Update `real_aqi_data.py` with your key
+    3. Restart the dashboard
+    """)
+else:
+    st.sidebar.info("🎭 Using synthetic demo data")
+
 # Functions for data generation (ENHANCED!)
 @st.cache_data
 def get_pollution_data(city_name):
@@ -550,9 +573,20 @@ def get_pollution_sources(city_name):
         'Percentage': list(sources.values())
     })
 
-# NEW FUNCTION - Historical AQI
-@st.cache_data
+# REAL HISTORICAL AQI DATA
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_historical_aqi_data(city_name):
+    """Get historical AQI data with real API integration"""
+    try:
+        # Try to get real historical data
+        historical_df = get_live_historical_data(city_name)
+        if historical_df is not None and not historical_df.empty:
+            return historical_df
+            
+    except Exception as e:
+        st.warning(f"Using demo historical data for {city_name}: {str(e)}")
+    
+    # Fallback to synthetic data
     np.random.seed(hash(city_name) % 100)
     city_aqi_base = {
         "Delhi": 110, "Mumbai": 90, "Bangalore": 75, "Chennai": 80,
@@ -603,9 +637,28 @@ def get_aqi_prediction(city_name, date_str):
     except:
         return base_aqi + np.random.normal(0, 10)
 
-# NEW FUNCTION - Real-time AQI
-@st.cache_data
+# REAL AQI DATA INTEGRATION
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_real_time_aqi(city, station):
+    """Get real-time AQI data with API integration"""
+    try:
+        real_data = RealAQIData()
+        station_data = real_data.get_station_data(city, station)
+        
+        if station_data:
+            return station_data['aqi']
+        else:
+            # Fallback to city-wide data
+            city_data = get_live_aqi_data(city)
+            if city_data:
+                # Add station-specific variation
+                station_offset = hash(station) % 20 - 10
+                return max(20, city_data['aqi'] + station_offset)
+            
+    except Exception as e:
+        st.warning(f"Using demo data for {city}/{station}: {str(e)}")
+        
+    # Final fallback to synthetic data
     np.random.seed(hash(f"{city}{station}{datetime.now().strftime('%Y-%m-%d-%H')}") % 1000)
     
     city_aqi_base = {
@@ -746,13 +799,33 @@ def create_pdf_report(city, aqi, status, pm25, no2, co, source_df):
     buffer.seek(0)
     return buffer
 
-# Get the current data
+# Get the current data with REAL AQI integration
 df = get_pollution_data(location)
 source_df = get_pollution_sources(location)
-current_pm25 = df['PM2.5'].iloc[-1]
-current_no2 = df['NO2'].iloc[-1]
-current_co = df['CO'].iloc[-1]
-current_aqi = calculate_aqi_from_pollutants(current_pm25, current_no2, current_co)
+
+# Try to get real AQI data first
+try:
+    real_aqi_data = get_live_aqi_data(location)
+    if real_aqi_data:
+        current_aqi = real_aqi_data['aqi']
+        current_pm25 = real_aqi_data.get('pm25', df['PM2.5'].iloc[-1])
+        current_no2 = real_aqi_data.get('no2', df['NO2'].iloc[-1])
+        current_co = real_aqi_data.get('co', df['CO'].iloc[-1])
+        
+        # Display data source info
+        st.sidebar.success(f"✅ Live data from: {real_aqi_data.get('source', 'Real API')}")
+        st.sidebar.write(f"🕐 Last updated: {real_aqi_data.get('timestamp', datetime.now()).strftime('%H:%M:%S')}")
+    else:
+        raise Exception("No real data available")
+        
+except Exception as e:
+    # Fallback to synthetic data
+    current_pm25 = df['PM2.5'].iloc[-1]
+    current_no2 = df['NO2'].iloc[-1]
+    current_co = df['CO'].iloc[-1]
+    current_aqi = calculate_aqi_from_pollutants(current_pm25, current_no2, current_co)
+    st.sidebar.warning("⚠️ Using demo data (API not configured)")
+
 aqi_status, aqi_color = get_aqi_status(current_aqi)
 
 # NAVIGATION VIEWS - THIS IS THE MAIN NEW FEATURE!
