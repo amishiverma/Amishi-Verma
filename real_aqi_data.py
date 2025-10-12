@@ -10,12 +10,14 @@ from datetime import datetime, timedelta
 import json
 import time
 import streamlit as st
+import os
 
 class RealAQIData:
     def __init__(self):
-        # API Keys - Replace with your actual keys
-        self.openweather_api_key = "demo"  # Get from openweathermap.org
-        self.waqi_token = "demo"  # Get from aqicn.org/api/ (Free registration required)
+        # API Keys - read from Streamlit secrets first, then from environment variables
+        # Leave empty string if not configured; code will fallback silently
+        self.openweather_api_key = st.secrets.get("OPENWEATHER_API_KEY", os.getenv("OPENWEATHER_API_KEY", ""))
+        self.waqi_token = st.secrets.get("WAQI_TOKEN", os.getenv("WAQI_TOKEN", ""))
         
         # City coordinates for API calls
         self.city_coords = {
@@ -233,29 +235,32 @@ class RealAQIData:
         """
         st.write("🧪 Testing API Connections...")
         
-        # Test WAQI API
-        try:
-            test_data = self.get_real_time_aqi_waqi("Delhi")
-            if test_data:
-                st.success("✅ WAQI API: Connected successfully")
-                st.write(f"Delhi AQI: {test_data['aqi']}")
-            else:
-                st.error("❌ WAQI API: Connection failed")
-        except:
-            st.error("❌ WAQI API: Not configured")
-            
-        # Test OpenWeather API
-        try:
-            if self.openweather_api_key != "YOUR_OPENWEATHER_API_KEY":
-                test_data = self.get_openweather_aqi("Delhi")
-                if test_data:
-                    st.success("✅ OpenWeather API: Connected successfully")
+        # Test WAQI API (only if token is configured)
+        if self.waqi_token:
+            try:
+                test_data = self.get_real_time_aqi_waqi("Delhi")
+                if test_data and isinstance(test_data, dict):
+                    st.success("✅ WAQI: Data fetched")
+                    st.write(f"Delhi AQI: {test_data.get('aqi')}")
                 else:
-                    st.error("❌ OpenWeather API: Connection failed")
-            else:
-                st.warning("⚠️ OpenWeather API: API key not configured")
-        except:
-            st.error("❌ OpenWeather API: Connection failed")
+                    st.error("❌ WAQI: Could not fetch data (check token/limits)")
+            except Exception as e:
+                st.error(f"❌ WAQI: Error - {str(e)}")
+        else:
+            st.info("ℹ️ WAQI token not configured. Live WAQI data will be unavailable until configured.")
+
+        # Test OpenWeather API (only if key is configured)
+        if self.openweather_api_key:
+            try:
+                test_data = self.get_openweather_aqi("Delhi")
+                if test_data and isinstance(test_data, dict):
+                    st.success("✅ OpenWeather: Data fetched")
+                else:
+                    st.error("❌ OpenWeather: Could not fetch data (check key/limits)")
+            except Exception as e:
+                st.error(f"❌ OpenWeather: Error - {str(e)}")
+        else:
+            st.info("ℹ️ OpenWeather API key not configured. Weather-based AQI will be unavailable until configured.")
 
 # Fallback synthetic data (used when APIs are unavailable)
 def get_fallback_aqi_data(city_name):
