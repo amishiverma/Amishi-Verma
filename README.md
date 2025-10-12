@@ -100,22 +100,7 @@ streamlit run streamlit_dashboard.py
 
 ---
 
-## ☁️ Cloud Deployment (Streamlit Cloud)
 
-### 🎯 Quick Deploy Steps
-1. **📂 Make Repository Public** (or grant Streamlit Cloud access)
-2. **🔗 Connect to Streamlit Cloud**:
-   - Visit [streamlit.io/cloud](https://streamlit.io/cloud)
-   - Click "New app" → Connect GitHub
-   - Select repository: `amishiverma/Amishi-Verma`
-   - Main file: `streamlit_dashboard.py`
-3. **🔐 Add Secrets** (Settings → Secrets):
-   ```toml
-   WAQI_TOKEN = "your_waqi_token_here"
-
-   ```
-4. **🚀 Deploy!** 
----
 
 ## 🎯 Dashboard Features & Usage
 
