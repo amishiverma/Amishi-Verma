@@ -61,18 +61,15 @@ Choose your preferred method:
 Create `.streamlit/secrets.toml`:
 ```toml
 WAQI_TOKEN = "93a6a5ac6b2bba5e166206d19b918e6b747fe14f"  # Your actual token
-OPENWEATHER_API_KEY = "your_openweather_key_here"        # Optional
 ```
 
 **🌐 Environment Variables:**
 ```bash
 # Windows
 set WAQI_TOKEN=93a6a5ac6b2bba5e166206d19b918e6b747fe14f
-set OPENWEATHER_API_KEY=your_openweather_key_here
 
 # Linux/macOS  
 export WAQI_TOKEN=93a6a5ac6b2bba5e166206d19b918e6b747fe14f
-export OPENWEATHER_API_KEY=your_openweather_key_here
 ```
 
 ### 4️⃣ Launch Dashboard
@@ -85,8 +82,7 @@ streamlit run streamlit_dashboard.py
 
 ### 📡 Supported APIs
 - **🏭 WAQI (World Air Quality Index)**: [aqicn.org/api](https://aqicn.org/api/) - Global AQI & station data
-- **🌤️ OpenWeather Air Pollution**: [openweathermap.org/api](https://openweathermap.org/api) - Weather & air quality
-
+  
 ### 🔑 API Key Setup
 
 **🚀 Quick WAQI Setup (2 minutes):**
@@ -97,11 +93,10 @@ streamlit run streamlit_dashboard.py
 
 **Required environment variables:**
 - `WAQI_TOKEN` - Your World Air Quality Index API token
-- `OPENWEATHER_API_KEY` - Your OpenWeather API key (optional)
+
 
 **Example token format:** `93a6a5ac6b2bba5e166206d19b918e6b747fe14f`
 
-*💡 Don't have API keys? No problem! The dashboard gracefully falls back to realistic synthetic data.*
 
 ---
 
@@ -119,7 +114,7 @@ streamlit run streamlit_dashboard.py
    WAQI_TOKEN = "your_waqi_token_here"
    OPENWEATHER_API_KEY = "your_openweather_key_here"
    ```
-4. **🚀 Deploy!** Your app will be live at `https://your-app-name.streamlit.app`
+4. **🚀 Deploy!** Your app will be live at `https://Amishi-Verma.streamlit.app`
 
 ---
 
@@ -182,7 +177,6 @@ results = run_complete_workflow("Delhi")
 4. **📤 Push** to branch (`git push origin feature/amazing-feature`)
 5. **🔄 Open** a Pull Request
 
-*🚫 Keep secrets out of commits! Use environment variables.*
 
 ---
 
