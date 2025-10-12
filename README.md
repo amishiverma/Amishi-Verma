@@ -60,14 +60,19 @@ Choose your preferred method:
 **🔒 Streamlit Secrets (Recommended for Cloud):**
 Create `.streamlit/secrets.toml`:
 ```toml
-WAQI_TOKEN = "your_waqi_token_here"
-OPENWEATHER_API_KEY = "your_openweather_key_here"
+WAQI_TOKEN = "93a6a5ac6b2bba5e166206d19b918e6b747fe14f"  # Your actual token
+OPENWEATHER_API_KEY = "your_openweather_key_here"        # Optional
 ```
 
 **🌐 Environment Variables:**
 ```bash
-set WAQI_TOKEN=your_waqi_token_here
+# Windows
+set WAQI_TOKEN=93a6a5ac6b2bba5e166206d19b918e6b747fe14f
 set OPENWEATHER_API_KEY=your_openweather_key_here
+
+# Linux/macOS  
+export WAQI_TOKEN=93a6a5ac6b2bba5e166206d19b918e6b747fe14f
+export OPENWEATHER_API_KEY=your_openweather_key_here
 ```
 
 ### 4️⃣ Launch Dashboard
@@ -83,9 +88,18 @@ streamlit run streamlit_dashboard.py
 - **🌤️ OpenWeather Air Pollution**: [openweathermap.org/api](https://openweathermap.org/api) - Weather & air quality
 
 ### 🔑 API Key Setup
-Required environment variables:
+
+**🚀 Quick WAQI Setup (2 minutes):**
+1. Visit: [aqicn.org/api](https://aqicn.org/api/)
+2. Click "Request API Token"
+3. Fill simple form (name, email, usage description)
+4. Get instant free token!
+
+**Required environment variables:**
 - `WAQI_TOKEN` - Your World Air Quality Index API token
-- `OPENWEATHER_API_KEY` - Your OpenWeather API key
+- `OPENWEATHER_API_KEY` - Your OpenWeather API key (optional)
+
+**Example token format:** `93a6a5ac6b2bba5e166206d19b918e6b747fe14f`
 
 *💡 Don't have API keys? No problem! The dashboard gracefully falls back to realistic synthetic data.*
 
