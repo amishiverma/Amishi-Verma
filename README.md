@@ -60,7 +60,7 @@ Choose your preferred method:
 **🔒 Streamlit Secrets (Recommended for Cloud):**
 Create `.streamlit/secrets.toml`:
 ```toml
-WAQI_TOKEN = "93a6a5ac6b2bba5e166206d19b918e6b747fe14f"  # Your actual token
+WAQI_TOKEN = "93a6a5ac6b2bba5e166206d19b918e6b747fe14f"
 ```
 
 **🌐 Environment Variables:**
@@ -112,10 +112,9 @@ streamlit run streamlit_dashboard.py
 3. **🔐 Add Secrets** (Settings → Secrets):
    ```toml
    WAQI_TOKEN = "your_waqi_token_here"
-   OPENWEATHER_API_KEY = "your_openweather_key_here"
-   ```
-4. **🚀 Deploy!** Your app will be live at `https://Amishi-Verma.streamlit.app`
 
+   ```
+4. **🚀 Deploy!** 
 ---
 
 ## 🎯 Dashboard Features & Usage
