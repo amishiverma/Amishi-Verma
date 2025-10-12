@@ -646,14 +646,21 @@ def get_real_time_aqi(city, station):
         station_data = real_data.get_station_data(city, station)
         
         if station_data:
-            return station_data['aqi']
+            # Ensure AQI is numeric
+            aqi_value = station_data['aqi']
+            if isinstance(aqi_value, str):
+                aqi_value = float(aqi_value)
+            return float(aqi_value)
         else:
             # Fallback to city-wide data
             city_data = get_live_aqi_data(city)
             if city_data:
                 # Add station-specific variation
                 station_offset = hash(station) % 20 - 10
-                return max(20, city_data['aqi'] + station_offset)
+                city_aqi = city_data['aqi']
+                if isinstance(city_aqi, str):
+                    city_aqi = float(city_aqi)
+                return float(max(20, city_aqi + station_offset))
             
     except Exception as e:
         pass  # Continue with fallback data
@@ -691,18 +698,31 @@ def calculate_aqi_from_pollutants(pm25, no2, co):
     return round(aqi, 1)
 
 def get_aqi_status(aqi):
-    if aqi <= 50:
-        return "Good", "green"
-    elif aqi <= 100:
-        return "Satisfactory", "lightgreen"
-    elif aqi <= 150:
-        return "Moderate", "orange"
-    elif aqi <= 200:
-        return "Poor", "red"
-    elif aqi <= 300:
-        return "Very Poor", "purple"
-    else:
-        return "Hazardous", "maroon"
+    """Get AQI status and color with proper type conversion"""
+    try:
+        # Convert to float/int if it's a string or other type
+        if isinstance(aqi, str):
+            aqi = float(aqi)
+        elif aqi is None:
+            aqi = 50  # Default fallback
+        
+        aqi = float(aqi)  # Ensure it's numeric
+        
+        if aqi <= 50:
+            return "Good", "green"
+        elif aqi <= 100:
+            return "Satisfactory", "lightgreen"
+        elif aqi <= 150:
+            return "Moderate", "orange"
+        elif aqi <= 200:
+            return "Poor", "red"
+        elif aqi <= 300:
+            return "Very Poor", "purple"
+        else:
+            return "Hazardous", "maroon"
+    except (ValueError, TypeError):
+        # If conversion fails, return default
+        return "Unknown", "gray"
 
 # Function to create PDF report
 def create_pdf_report(city, aqi, status, pm25, no2, co, source_df):

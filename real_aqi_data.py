@@ -17,7 +17,7 @@ class RealAQIData:
         # API Keys - read from Streamlit secrets first, then from environment variables
         # Leave empty string if not configured; code will fallback silently
         self.openweather_api_key = st.secrets.get("OPENWEATHER_API_KEY", os.getenv("OPENWEATHER_API_KEY", ""))
-        self.waqi_token = st.secrets.get("WAQI_TOKEN", os.getenv("WAQI_TOKEN", ""))
+        self.waqi_token = st.secrets.get("WAQI_TOKEN", os.getenv("WAQI_TOKEN", "93a6a5ac6b2bba5e166206d19b918e6b747fe14f"))
         
         # City coordinates for API calls
         self.city_coords = {
