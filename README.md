@@ -1,103 +1,190 @@
-# EnviroScan — Real-Time Air Quality Monitoring & Source Prediction
+# 🌍 EnviroScan — Real-Time Air Quality Monitoring & Source Prediction
 
-EnviroScan is an interactive Streamlit dashboard that monitors air quality in real time, provides historical analysis, and predicts pollution sources using machine learning. The app integrates live AQI and weather data, visualizes results on maps and charts, and exports PDF/CSV reports.
-
-## Key Features
-- Real-time AQI from WAQI / OpenWeather (configurable)
-- Historical AQI time series and downloadable CSV
-- AI-powered source classification (Random Forest / XGBoost)
-- Interactive Folium maps with station markers and heatmaps
-- PDF report generation via ReportLab
-- Light / Dark theme and responsive UI
-- Fallback to synthetic data when APIs are unavailable (silent fallback)
-- Caching to reduce API calls and improve performance
-
-## Project structure
-```
-EnviroScan/
-├── streamlit_dashboard.py      # Main Streamlit app (UI + views)
-├── real_aqi_data.py           # Live AQI + weather API integration (WAQI/OpenWeather)
-├── data_loader.py             # Data processing, feature engineering, ML utilities
-├── enviroscan2.py             # Utilities / ngrok (if used)
-├── requirements.txt
-├── REAL_DATA_SETUP.md         # API key & setup instructions
-├── USAGE.md
-└── README.md
-```
-
-## Quick start (local)
-
-1. Clone repo:
-  ```bash
-  git clone https://github.com/<your-username>/Amishi-Verma.git
-  cd Amishi-Verma
-  ```
-2. Create venv and install:
-  ```bash
-  python -m venv venv
-  # Windows
-  venv\Scripts\activate
-  # macOS / Linux
-  source venv/bin/activate
-  pip install -r requirements.txt
-  ```
-3. Configure API keys:
-  - Preferred: use Streamlit secrets (recommended for cloud)
-  - Or set keys in `real_aqi_data.py` or environment variables:
-    ```python
-    WAQI_TOKEN = "your_waqi_token_here"
-    OPENWEATHER_API_KEY = "your_openweather_api_key_here"
-    ```
-4. Run the app:
-  ```bash
-  streamlit run streamlit_dashboard.py
-  ```
-
-## Real data configuration
-- WAQI (World Air Quality Index): https://aqicn.org/api/ (AQI & station data)
-- OpenWeather Air Pollution: https://openweathermap.org/api (air pollution endpoint)
-- Use Streamlit Cloud secrets or environment variables for API keys:
-  - `WAQI_TOKEN`
-  - `OPENWEATHER_API_KEY`
-
-## Deployment (Streamlit Cloud)
-1. Make repository public (or grant Streamlit Cloud access to private repo).
-2. On Streamlit Cloud, create new app → connect repo → set main file: `streamlit_dashboard.py`.
-3. Add secrets via Settings → Secrets:
-  ```toml
-  WAQI_TOKEN = "your_waqi_token_here"
-  OPENWEATHER_API_KEY = "your_openweather_api_key_here"
-  ```
-4. Deploy.
-
-## Usage snippets
-- Get live city AQI:
-  ```python
-  from real_aqi_data import RealAQIData
-  api = RealAQIData()
-  data = api.get_real_time_aqi_waqi("Delhi")
-  ```
-- Run ML workflow:
-  ```python
-  from data_loader import run_complete_workflow
-  results = run_complete_workflow("Delhi")
-  ```
-
-## Notes & best practices
-- Sensitive keys should never be committed. Use Streamlit secrets or environment variables.
-- The app includes intelligent fallbacks — if API limits are hit, the dashboard uses cached or synthetic data silently (no demo labels).
-- For production use add logging, rate-limit handling, and proper model persistence (models/ directory, .pkl files ignored by .gitignore).
-
-## Contributing
-- Fork → feature branch → PR. Keep secrets out of commits.
-
-## License
-Include your chosen license file (e.g., MIT) at project root.
+An intelligent, interactive Streamlit dashboard that monitors air quality in real time, provides historical analysis, and predicts pollution sources using advanced machine learning. Experience live AQI data, weather integration, and professional visualizations with export capabilities! 🚀
 
 ---
 
-**If you want, I can:**
-- overwrite `README.md` with this content and push the change, and
-- remove any remaining hardcoded API keys and ensure the app reads keys from Streamlit secrets / environment variables.
- 
-Which action should I take next? 
+## ✨ Key Features
+
+- 🌡️ **Real-time AQI** from WAQI & OpenWeather APIs (configurable)
+- 📊 **Historical Analysis** with time series and downloadable CSV reports  
+- 🤖 **AI-Powered Source Classification** using Random Forest & XGBoost
+- 🗺️ **Interactive Maps** with Folium station markers and heatmaps
+- 📄 **PDF Report Generation** via ReportLab for professional presentations
+- 🎨 **Light/Dark Theme** with responsive, mobile-friendly UI
+- ⚡ **Smart Fallback System** - seamless synthetic data when APIs unavailable
+- 🚀 **Performance Optimized** with caching to reduce API calls
+
+---
+
+## 🗂️ Project Structure
+
+```
+📦 EnviroScan/
+├── 🎯 streamlit_dashboard.py      # Main Streamlit app (UI + views)
+├── 🌐 real_aqi_data.py           # Live AQI + weather API integration
+├── 🔧 data_loader.py             # Data processing & ML utilities
+├── 📋 requirements.txt           # Project dependencies
+├── 📖 REAL_DATA_SETUP.md         # API setup & configuration guide
+├── 📄 README.md                  # Project documentation
+├── 🔐 LICENSE                    # MIT License
+└── 🚫 .gitignore                 # Git ignore patterns
+```
+
+## 🚀 Quick Start (Local)
+
+### 1️⃣ Clone Repository
+```bash
+git clone https://github.com/amishiverma/Amishi-Verma.git
+cd Amishi-Verma
+```
+
+### 2️⃣ Setup Environment
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3️⃣ Configure API Keys (Optional for Live Data)
+Choose your preferred method:
+
+**🔒 Streamlit Secrets (Recommended for Cloud):**
+Create `.streamlit/secrets.toml`:
+```toml
+WAQI_TOKEN = "your_waqi_token_here"
+OPENWEATHER_API_KEY = "your_openweather_key_here"
+```
+
+**🌐 Environment Variables:**
+```bash
+set WAQI_TOKEN=your_waqi_token_here
+set OPENWEATHER_API_KEY=your_openweather_key_here
+```
+
+### 4️⃣ Launch Dashboard
+```bash
+streamlit run streamlit_dashboard.py
+```
+🎉 **Success!** Open your browser to `http://localhost:8501`
+
+## 🌐 Real Data Configuration
+
+### 📡 Supported APIs
+- **🏭 WAQI (World Air Quality Index)**: [aqicn.org/api](https://aqicn.org/api/) - Global AQI & station data
+- **🌤️ OpenWeather Air Pollution**: [openweathermap.org/api](https://openweathermap.org/api) - Weather & air quality
+
+### 🔑 API Key Setup
+Required environment variables:
+- `WAQI_TOKEN` - Your World Air Quality Index API token
+- `OPENWEATHER_API_KEY` - Your OpenWeather API key
+
+*💡 Don't have API keys? No problem! The dashboard gracefully falls back to realistic synthetic data.*
+
+---
+
+## ☁️ Cloud Deployment (Streamlit Cloud)
+
+### 🎯 Quick Deploy Steps
+1. **📂 Make Repository Public** (or grant Streamlit Cloud access)
+2. **🔗 Connect to Streamlit Cloud**:
+   - Visit [streamlit.io/cloud](https://streamlit.io/cloud)
+   - Click "New app" → Connect GitHub
+   - Select repository: `amishiverma/Amishi-Verma`
+   - Main file: `streamlit_dashboard.py`
+3. **🔐 Add Secrets** (Settings → Secrets):
+   ```toml
+   WAQI_TOKEN = "your_waqi_token_here"
+   OPENWEATHER_API_KEY = "your_openweather_key_here"
+   ```
+4. **🚀 Deploy!** Your app will be live at `https://your-app-name.streamlit.app`
+
+---
+
+## 🎯 Dashboard Features & Usage
+
+### 📊 **Three Main Views**
+- **📈 Historical Analysis** - Time series charts and trend analysis
+- **🔮 Prediction View** - ML-powered source classification and forecasting  
+- **🌍 Real-Time AQI** - Live air quality data with interactive maps
+
+### 🎛️ **Interactive Controls**
+- **🌙 Theme Toggle** - Switch between light and dark modes
+- **🏙️ City Selection** - Choose from 8+ major Indian cities
+- **📥 Export Options** - Download PDF reports and CSV data
+- **⚡ Real Data Toggle** - Switch between live APIs and synthetic data
+
+### 🗺️ **Map Visualizations**
+- Color-coded AQI markers with station details
+- Interactive popups showing pollutant levels
+- Responsive design for desktop and mobile
+
+---
+
+## 🤖 Machine Learning & APIs
+
+### 🔬 **ML Models**
+```python
+# Get live city AQI data
+from real_aqi_data import RealAQIData
+api = RealAQIData()
+data = api.get_real_time_aqi_waqi("Delhi")
+
+# Run complete ML workflow  
+from data_loader import run_complete_workflow
+results = run_complete_workflow("Delhi")
+```
+
+### 🏗️ **Architecture**
+- **Random Forest & XGBoost** for source classification
+- **Feature Engineering** with spatial and temporal data
+- **Intelligent Caching** with 5-minute TTL for API calls
+- **Graceful Fallbacks** to synthetic data when APIs unavailable
+
+---
+
+## 📝 Notes & Best Practices
+
+- 🔐 **Security**: API keys stored in Streamlit secrets/environment variables only
+- ⚡ **Performance**: Intelligent caching reduces API calls and improves response time  
+- 🛡️ **Reliability**: Fallback system ensures dashboard always displays meaningful data
+- 📱 **Responsive**: Mobile-friendly design with touch-optimized controls
+
+---
+
+## 🤝 Contributing
+
+1. **🍴 Fork** the repository
+2. **🌿 Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **💾 Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **📤 Push** to branch (`git push origin feature/amazing-feature`)
+5. **🔄 Open** a Pull Request
+
+*🚫 Keep secrets out of commits! Use environment variables.*
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🎉 Ready to Monitor Air Quality?
+
+**Get started in 3 commands:**
+```bash
+git clone https://github.com/amishiverma/Amishi-Verma.git
+cd Amishi-Verma && pip install -r requirements.txt  
+streamlit run streamlit_dashboard.py
+```
+
+**🌟 Star this repo if you find it useful!** 
